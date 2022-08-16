@@ -1,55 +1,59 @@
 <template>
-  <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
+    <v-app>
+        <v-navigation-drawer v-model="drawer" app>
+            <v-sheet color="grey lighten-4" class="pa-4">
+                <v-avatar class="mb-4" color="grey darken-1" size="64"></v-avatar>
 
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
+                <div class="username">john@vuetifyjs.com</div>
+            </v-sheet>
 
-      <v-spacer></v-spacer>
+            <v-divider></v-divider>
 
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
+            <v-list>
+                <v-list-item v-for="[icon, text, link] in links" :key="icon" :to="link" link>
+                    <v-list-item-icon>
+                        <v-icon>{{ icon }}</v-icon>
+                    </v-list-item-icon>
 
-    <v-main>
-      <router-view/>
-    </v-main>
-  </v-app>
+                    <v-list-item-content>
+                        <v-list-item-title>{{ text }}</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+        </v-navigation-drawer>
+        <v-main style="padding-left: 30px;">
+            <router-view />
+        </v-main>
+    </v-app>
 </template>
 
 <script>
 
 export default {
-  name: 'App',
-
-  data: () => ({
-    //
-  }),
+    name: 'App',
+    data: () => ({
+        drawer: null,
+        links: [
+            ['mdi-inbox-arrow-down', 'Inbox', '/'],
+            ['mdi-send', 'Send', '/'],
+            ['mdi-delete', 'Trash', '/'],
+            ['mdi-alert-octagon', 'Spam', '/'],
+        ],
+    }),
 };
 </script>
+<style>
+.grey.darken-1 {
+    background-color: #757575;
+    border-color: #757575;
+}
+
+.pa-4 {
+    text-align: center;
+    padding: 16px;
+}
+
+.username {
+    padding-top: 10px;
+}
+</style>
