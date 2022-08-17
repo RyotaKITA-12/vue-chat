@@ -1,16 +1,8 @@
 <template>
     <v-app id="inspire">
-        <v-system-bar app>
-            <v-spacer></v-spacer>
-
-            <v-icon>mdi-square</v-icon>
-
-            <v-icon>mdi-circle</v-icon>
-
-            <v-icon>mdi-triangle</v-icon>
-        </v-system-bar>
-
+        <Sidebar />
         <v-main>
+            <h1>{{ room ? room.name : "" }}</h1>
             <v-container class="py-8 px-6" fluid>
                 <v-row>
                     <v-col v-for="card in cards" :key="card" cols="12">
@@ -21,6 +13,7 @@
                                 <template v-for="(data, index) in messages">
                                     <v-list-item :key="index">
                                         <v-list-item-avatar color="grey darken-1">
+                                            <v-img :src="data.imgURL"></v-img>
                                         </v-list-item-avatar>
 
                                         <v-list-item-content>
@@ -30,7 +23,7 @@
                                         </v-list-item-content>
                                     </v-list-item>
 
-                                    <v-divider v-if="n !== 6" :key="`divider-${index}`" inset></v-divider>
+                                    <v-divider :key="`divider-${index}`" inset></v-divider>
                                 </template>
                             </v-list>
                         </v-card>
@@ -50,12 +43,39 @@
 </template>
 
 <script>
+import firebase from "@/firebase/firebase"
+import Sidebar from '@/components/layouts/Sidebar'
+
 export default {
-    created() {
-        this.user_id = this.$route.query.user_id;
+    components: {
+        Sidebar
+    },
+    async created() {
+        this.room_id = this.$route.query.room_id;
+        const roomRef = firebase.firestore().collection("rooms").doc(this.room_id)
+        const roomDoc = await roomRef.get()
+        if (!roomDoc.exists) {
+            await this.$router.push('/')
+        }
+        this.room = roomDoc.data()
+
+        /* const chatRef = firebase.firestore().collection("chats") */
+        /* const snapshot = await chatRef.get()                     */
+    },
+    mounted() {
+        this.auth = JSON.parse(sessionStorage.getItem('user'))
+
+        const roomRef = firebase.firestore().collection('rooms').doc(this.room_id)
+        roomRef.collection('messages').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(changes => {
+                this.messages.push(changes.doc.data())
+            })
+        })
+
     },
     data: () => ({
-        user_id: "",
+        room_id: "",
+        room: null,
         cards: ['Today'],
         drawer: null,
         links: [
@@ -65,8 +85,8 @@ export default {
             ['mdi-alert-octagon', 'Spam'],
         ],
         body: '',
-        messages: [
-        ]
+        messages: [],
+        auth: null,
     }),
     computed: {
         invalid() {
@@ -81,8 +101,17 @@ export default {
             this.body = ""
         },
         submit() {
-            this.messages.unshift({ message: this.body })
-            this.body = ""
+            const roomRef = firebase.firestore().collection('rooms').doc(this.room_id)
+            roomRef.collection('messages').add({
+                message: this.body,
+                user_id: this.auth.displayName,
+                imgURL: this.auth.imgURL,
+                createdAt: firebase.firestore.Timestamp.now(),
+            }).then(result => {
+                this.body = ""
+            }).catch(error => {
+                alert("メッセージの送信に失敗しました")
+            })
         },
     },
 }
